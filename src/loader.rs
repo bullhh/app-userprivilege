@@ -1,10 +1,8 @@
-use alloc::sync::Arc;
 use axfs::ROOT_FS_CONTEXT;
 use axhal::mem::{PAGE_SIZE_4K, phys_to_virt};
-use axhal::paging::{MappingFlags, PageSize};
+use axhal::paging::{MappingFlags};
 #[allow(unused_imports)]
 use axio::Read;
-use axmm::backend::{Backend, SharedPages};
 use axmm::AddrSpace;
 
 use crate::APP_ENTRY;
@@ -13,21 +11,16 @@ pub fn load_user_app(fname: &str, uspace: &mut AddrSpace) -> Result<(), axio::Er
     let mut buf = [0u8; PAGE_SIZE_4K];
     load_file(fname, &mut buf)?;
 
-    // Allocate a physical page for the user code.
-    let code_pages = Arc::new(
-        SharedPages::new(PAGE_SIZE_4K, PageSize::Size4K)
-            .map_err(|_| axio::Error::NoMemory)?,
-    );
+    // Map memory for the user code
     uspace
-        .map(
+        .map_alloc(
             (APP_ENTRY).into(),
             PAGE_SIZE_4K,
             MappingFlags::READ
                 | MappingFlags::WRITE
                 | MappingFlags::EXECUTE
                 | MappingFlags::USER,
-            true,
-            Backend::new_shared((APP_ENTRY).into(), code_pages),
+            true, // populate
         )
         .map_err(|_| axio::Error::NoMemory)?;
 

@@ -34,19 +34,12 @@ const APP_ENTRY: usize = 0x1000;
 fn main() {
     #[cfg(feature = "axstd")]
     {
-        use alloc::sync::Arc;
-        use axhal::paging::{MappingFlags, PageSize};
-        use axmm::backend::SharedPages;
+        use axhal::paging::MappingFlags;
         use memory_addr::va;
 
-        // A new address space for user app (equivalent to axmm::new_user_aspace()).
+        // A new address space for user app using axmm::new_user_aspace().
         // User space: [0x0, 0x40_0000_0000) — 256GB, below kernel space.
-        let mut uspace = axmm::AddrSpace::new_empty(va!(0x0), 0x40_0000_0000).unwrap();
-
-        // Copy kernel page table entries so kernel code is accessible in user tasks.
-        uspace
-            .copy_mappings_from(&axmm::kernel_aspace().lock())
-            .unwrap();
+        let mut uspace = axmm::new_user_aspace(va!(0x0), 0x40_0000_0000).unwrap();
 
         // Load user app binary file into address space.
         if let Err(e) = loader::load_user_app("/sbin/origin", &mut uspace) {
@@ -61,18 +54,15 @@ fn main() {
             ustack_vaddr,
             ustack_top
         );
-        let stack_pages = Arc::new(
-            SharedPages::new(USER_STACK_SIZE, PageSize::Size4K).unwrap(),
-        );
+
         uspace
-            .map(
+            .map_alloc(
                 ustack_vaddr,
                 USER_STACK_SIZE,
                 MappingFlags::READ | MappingFlags::WRITE | MappingFlags::USER,
-                true,
-                axmm::backend::Backend::new_shared(ustack_vaddr, stack_pages),
+                false,
             )
-            .unwrap();
+            .expect("map user stack");
 
         ax_println!("New user address space: {:#x?}", uspace);
 
