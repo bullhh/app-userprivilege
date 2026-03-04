@@ -46,7 +46,7 @@ fn main() {
             panic!("Cannot load app! {:?}", e);
         }
 
-        // Init user stack.
+        // Init user stack with eager allocation.
         let ustack_top = uspace.end();
         let ustack_vaddr = ustack_top - USER_STACK_SIZE;
         ax_println!(
@@ -54,15 +54,14 @@ fn main() {
             ustack_vaddr,
             ustack_top
         );
-
         uspace
             .map_alloc(
                 ustack_vaddr,
                 USER_STACK_SIZE,
                 MappingFlags::READ | MappingFlags::WRITE | MappingFlags::USER,
-                false,
+                true, // populate=true: allocate immediately
             )
-            .expect("map user stack");
+            .unwrap();
 
         ax_println!("New user address space: {:#x?}", uspace);
 
