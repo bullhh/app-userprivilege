@@ -42,10 +42,7 @@ pub fn spawn_user_task(uspace: AddrSpace, ustack_top: VirtAddr) -> AxTaskRef {
                         }
                     }
                     ReturnReason::PageFault(vaddr, flags) => {
-                        ax_println!(
-                            "User page fault at {:#x}, flags: {:?}",
-                            vaddr, flags
-                        );
+                        ax_println!("User page fault at {:#x}, flags: {:?}", vaddr, flags);
                         axtask::exit(-1);
                     }
                     _ => {

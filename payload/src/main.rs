@@ -12,32 +12,16 @@ use core::panic::PanicInfo;
 unsafe extern "C" fn _start() -> ! {
     unsafe {
         #[cfg(any(target_arch = "riscv64", target_arch = "riscv32"))]
-        core::arch::asm!(
-            "li a7, 93",
-            "ecall",
-            options(noreturn)
-        );
+        core::arch::asm!("li a7, 93", "ecall", options(noreturn));
 
         #[cfg(target_arch = "aarch64")]
-        core::arch::asm!(
-            "mov x8, #93",
-            "svc #0",
-            options(noreturn)
-        );
+        core::arch::asm!("mov x8, #93", "svc #0", options(noreturn));
 
         #[cfg(target_arch = "x86_64")]
-        core::arch::asm!(
-            "mov rax, 93",
-            "syscall",
-            options(noreturn)
-        );
+        core::arch::asm!("mov rax, 93", "syscall", options(noreturn));
 
         #[cfg(target_arch = "loongarch64")]
-        core::arch::asm!(
-            "ori $a7, $zero, 93",
-            "syscall 0",
-            options(noreturn)
-        );
+        core::arch::asm!("ori $a7, $zero, 93", "syscall 0", options(noreturn));
     }
 }
 
